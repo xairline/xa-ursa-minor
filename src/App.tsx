@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
-import { Button, Container, Nav, Navbar } from "react-bootstrap";
+import { Button, Container, Form, Nav, Navbar, Row } from "react-bootstrap";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
@@ -13,48 +13,55 @@ function App() {
     setGreetMsg(await invoke("greet", { name }));
   }
 
-  // Track the theme in React state
+  // State for storing "light" or "dark"
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-  // Load theme from localStorage on initial mount (optional)
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-    }
+    // Create a media query to detect dark mode
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+    // Handler for any changes in the OS preference
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+
+    // Initialize the theme on mount
+    setTheme(prefersDark.matches ? 'dark' : 'light');
+
+    // Listen for changes to the system theme
+    prefersDark.addEventListener('change', handleChange);
+
+    // Cleanup listener on unmount
+    return () => {
+      prefersDark.removeEventListener('change', handleChange);
+    };
   }, []);
 
-  // Whenever theme changes, save it to localStorage (optional)
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  // Toggle theme handler
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
-
-  // Dynamically set class on container so it uses the correct CSS variables
-  const appThemeClass = theme === 'light' ? 'light-theme' : 'dark-theme';
-  // For the navbar specifically, you could add a separate class or rely on the theme
-  const navbarClass = theme === 'light' ? 'navbar-light-theme' : 'navbar-dark-theme';
+  // Choose navbar variant based on theme
+  const navbarVariant = theme === 'dark' ? 'dark' : 'light';
 
   return (
-    <div className={appThemeClass} style={{ minHeight: '100vh' }}>
+    <div className={theme === 'dark' ? 'dark-theme' : 'light-theme'} style={{ minHeight: '100vh' }}>
       {/* Sticky Navbar */}
       <Navbar
-        className={navbarClass}
         sticky="top"
         expand="lg"
-        variant={theme === 'light' ? 'light' : 'dark'}
+        variant={navbarVariant}
+        bg={navbarVariant}
       >
-        <Container>
-          <Navbar.Brand href="#home">My Tauri App</Navbar.Brand>
-          <Nav className="ms-auto">
-            <Button variant="outline-secondary" onClick={toggleTheme}>
-              {theme === 'light' ? 'Switch to Dark' : 'Switch to Light'}
-            </Button>
-          </Nav>
+        <Container fluid>
+          {/* 1. BRAND WITH ICON */}
+          <Navbar.Brand href="#home">
+            {/* Example icon—could be an SVG or an image */}
+            <img
+              src="/icon.png"
+              width="30"
+              height="30"
+              className="d-inline-block align-top me-2"
+              alt="App Logo"
+            />
+            XA URSA Minor Vibration Config
+          </Navbar.Brand>
         </Container>
       </Navbar>
 
