@@ -101,7 +101,9 @@ function App() {
             {menuOptions.map(option => (
               <Nav.Link
                 key={option.key}
-                className="mb-2 btn btn-outline-info text-start"
+                className={`mb-2 btn btn-outline-info text-start ${
+                  selectedMenu === option.key ? "active" : ""
+                }`}
                 onClick={() => setSelectedMenu(option.key)}
                 style={{width: "300px"}}
               >
