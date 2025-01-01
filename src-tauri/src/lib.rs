@@ -1,51 +1,35 @@
 use hidapi::HidApi;
 use std::{thread, time};
-static VID: u16 = 0x4098;
-static PID: u16 = 0xBC27;
+mod hid;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn get_sn() -> String {
-    // Attempt to create the HID API; if it fails, return ""
-    let api = match HidApi::new() {
-        Ok(api) => api,
-        Err(_) => return "".to_string(),
+    // Attempt to create our HID wrapper
+    let Some(hid_wrapper) = hid::HIDWrapper::new() else {
+        return "".to_string();
     };
 
-    // Attempt to open the device; if it fails, return ""
-    let device = match api.open(VID, PID) {
-        Ok(device) => device,
-        Err(_) => return "".to_string(),
-    };
-
-    // Attempt to get the serial number; if anything goes wrong, return ""
-    match device.get_serial_number_string() {
-        Ok(Some(sn)) => sn,
-        _ => "".to_string(),
-    }
+    // Return the serial number if it exists, else an empty string
+    hid_wrapper
+        .get_serial_number()
+        .unwrap_or_else(|| "".to_string())
 }
 
 #[tauri::command]
 fn restart_ursa_minor() -> String {
-    // 02 01 00 00 00 01 04 00 00 00 00 00 00 00
-
-    // Attempt to create the HID API; if it fails, return ""
-    let api = match HidApi::new() {
-        Ok(api) => api,
-        Err(_) => return "".to_string(),
-    };
-
-    // Attempt to open the device; if it fails, return ""
-    let device = match api.open(VID, PID) {
-        Ok(device) => device,
-        Err(_) => return "".to_string(),
-    };
-
-    // send the restart command
+    // The restart command data
     let data = [
         0x02, 0x01, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     ];
-    match device.write(&data) {
+
+    // Attempt to create our HID wrapper
+    let Some(hid_wrapper) = hid::HIDWrapper::new() else {
+        return "".to_string();
+    };
+
+    // Write the data
+    match hid_wrapper.write_data(&data) {
         Ok(_) => "Success".to_string(),
         Err(_) => "Failed".to_string(),
     }
@@ -53,56 +37,40 @@ fn restart_ursa_minor() -> String {
 
 #[tauri::command]
 fn test_ursa_minor() -> String {
-    // 02 01 00 00 00 01 04 00 00 00 00 00 00 00
-
-    // Attempt to create the HID API; if it fails, return ""
-    let api = match HidApi::new() {
-        Ok(api) => api,
-        Err(_) => return "".to_string(),
+    // Attempt to create our HID wrapper
+    let Some(hid_wrapper) = hid::HIDWrapper::new() else {
+        return "".to_string();
     };
 
-    // Attempt to open the device; if it fails, return ""
-    let device = match api.open(VID, PID) {
-        Ok(device) => device,
-        Err(_) => return "".to_string(),
-    };
-
-    // Data to be sent
-    let mut data = [0x02, 7, 191, 0, 0, 3, 0x49, 0, 0, 0, 0, 0, 0, 0];
-
-    // Start the timer
     let start = time::Instant::now();
     let mut counter = 0;
 
+    // Loop for 2 seconds
     while start.elapsed() < time::Duration::from_secs(2) {
-        data[8] = counter;
-        match device.write(&data) {
-            Ok(_) => {
-                counter += 1; // Increment the counter
-                println!("Command sent successfully. Count: {}", counter);
-            }
-            Err(e) => {
-                println!("Failed to send command: {}", e);
-                return "Failed".to_string();
-            }
-        }
-        // Small delay to avoid spamming (optional, adjust as needed)
-        thread::sleep(time::Duration::from_millis(100));
-    }
-    data[8] = 0;
-    match device.write(&data) {
-        Ok(_) => {
-            counter += 1; // Increment the counter
-            println!("Command sent successfully. Count: {}", counter);
-        }
-        Err(e) => {
-            println!("Failed to send command: {}", e);
+        // Write the data to the HID device
+        if let Err(e) = hid_wrapper.write_vibration(counter % 255) {
+            eprintln!("Failed to send command: {}", e);
             return "Failed".to_string();
         }
+        counter += 1;
+        println!("Command sent successfully. Count: {}", counter);
+
+        // Sleep a bit to avoid spamming
+        thread::sleep(time::Duration::from_millis(10));
     }
-    // Small delay to avoid spamming (optional, adjust as needed)
+
+    // Final write
+    if let Err(e) = hid_wrapper.write_vibration(0) {
+        eprintln!("Failed to send final command: {}", e);
+        return "Failed".to_string();
+    }
+    counter += 1;
+    println!("Command sent successfully. Count: {}", counter);
+
+    // Final short delay (optional)
     thread::sleep(time::Duration::from_millis(100));
     println!("Total commands sent: {}", counter);
+
     "Success".to_string()
 }
 
