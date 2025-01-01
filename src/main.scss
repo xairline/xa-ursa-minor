@@ -1,0 +1,15 @@
+// 1. Override the default Bootstrap variable(s)
+$primary: #006363;
+
+// 2. Import Bootstrap’s core
+@import 'bootstrap/scss/bootstrap';
+
+// You can also override other colors if you want:
+// $danger: #ff0000;
+// $success: #00ff00;
+// etc.
+
+// 3. (Optional) Put your global styles below
+body {
+    margin: 0;
+}

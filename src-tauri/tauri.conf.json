@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "xa-ursa-minor",
-        "width": 800,
-        "height": 600
+        "minWidth": 1000,
+        "minHeight": 1200
       }
     ],
     "security": {
