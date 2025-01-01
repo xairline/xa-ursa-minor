@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
+import { Button, Container, Nav, Navbar } from "react-bootstrap";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
@@ -12,39 +13,60 @@ function App() {
     setGreetMsg(await invoke("greet", { name }));
   }
 
+  // Track the theme in React state
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Load theme from localStorage on initial mount (optional)
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  // Whenever theme changes, save it to localStorage (optional)
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  // Toggle theme handler
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  // Dynamically set class on container so it uses the correct CSS variables
+  const appThemeClass = theme === 'light' ? 'light-theme' : 'dark-theme';
+  // For the navbar specifically, you could add a separate class or rely on the theme
+  const navbarClass = theme === 'light' ? 'navbar-light-theme' : 'navbar-dark-theme';
+
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
+    <div className={appThemeClass} style={{ minHeight: '100vh' }}>
+      {/* Sticky Navbar */}
+      <Navbar
+        className={navbarClass}
+        sticky="top"
+        expand="lg"
+        variant={theme === 'light' ? 'light' : 'dark'}
       >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+        <Container>
+          <Navbar.Brand href="#home">My Tauri App</Navbar.Brand>
+          <Nav className="ms-auto">
+            <Button variant="outline-secondary" onClick={toggleTheme}>
+              {theme === 'light' ? 'Switch to Dark' : 'Switch to Light'}
+            </Button>
+          </Nav>
+        </Container>
+      </Navbar>
+
+      {/* Main content area */}
+      <Container className="py-5">
+        <h1>Hello from Tauri + React + TypeScript!</h1>
+        <p>
+          This is a simple layout. The navbar is sticky at the top.
+          Click the button in the nav to toggle between light and dark themes.
+        </p>
+      </Container>
+    </div>
   );
 }
 
