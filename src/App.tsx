@@ -1,26 +1,16 @@
 import {useEffect, useState} from "react";
-import {invoke} from "@tauri-apps/api/core";
 import "./App.css";
-import {Badge, Button, Card, Container, Nav, Navbar} from "react-bootstrap";
+import {Container, Nav, Navbar} from "react-bootstrap";
 import VibrationProfile from "./components/VibrationProfile.tsx";
+import UrsaMinorInfo from "./components/UrsaMinorInfo.tsx";
 
 function App() {
-  const [serialNumber, setSerialNumber] = useState("");
 
-  async function getSerialNumber() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    let res = await invoke("get_sn", {})
-    console.log(res);
-    setSerialNumber(res as string);
-  }
 
   // State for storing "light" or "dark"
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      getSerialNumber();
-    }, 1000); // Run every 5 seconds
 
     // Create a media query to detect dark mode
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
@@ -39,7 +29,6 @@ function App() {
     // Cleanup listener on unmount
     return () => {
       prefersDark.removeEventListener('change', handleChange);
-      clearInterval(interval)
     };
   }, []);
 
@@ -115,26 +104,7 @@ function App() {
           {/* Spacer */}
           <div className="flex-grow-1"></div>
 
-          {/* Card at the Bottom */}
-          <div className="p-3">
-            <Card className="p-3">
-              <Card.Body className="d-flex flex-column align-items-center">
-                <Card.Title><h2>URSA Minor</h2></Card.Title>
-                <Card.Text>
-                  <p>
-                    Connection Status:
-                    {
-                      serialNumber.length > 0 ?
-                        <Badge bg="success" style={{marginLeft: "12px"}}>Success</Badge> :
-                        <Badge bg="danger" style={{marginLeft: "12px"}}>Error</Badge>
-                    }
-                  </p>
-                  <small className="text-muted">Serial Number: {serialNumber}</small>
-                </Card.Text>
-                <Button variant="danger">Restart</Button>
-              </Card.Body>
-            </Card>
-          </div>
+          <UrsaMinorInfo/>
         </div>
 
         {/* Main Content */}
