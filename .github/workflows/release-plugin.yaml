@@ -83,6 +83,8 @@ jobs:
           mkdir -p build/xa-ursa-minor
           cp x86_64_build/*.xpl build/xa-ursa-minor/
           
+          cd build
+          
           #          cp ${{ github.workspace }}/skunkcrafts_updater.cfg ${{ github.workspace }}/release/xa-ursa-minor/x86
           #          sed -i '' "s/REPLACE_ME/${TAG}/g" ${{ github.workspace }}/release/xa-ursa-minor/x86/skunkcrafts_updater.cfg
           #          sed -i '' "s/@ARCH@/x86/g" ${{ github.workspace }}/release/xa-ursa-minor/x86/skunkcrafts_updater.cfg
