@@ -4903,7 +4903,6 @@ dependencies = [
 name = "xa-ursa-minor"
 version = "0.1.0"
 dependencies = [
- "hidapi",
  "rusb",
  "serde",
  "serde_json",
@@ -4911,6 +4910,14 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-opener",
  "time",
+ "xa-ursa-minor-hid",
+]
+
+[[package]]
+name = "xa-ursa-minor-hid"
+version = "0.1.0"
+dependencies = [
+ "hidapi",
 ]
 
 [[package]]
