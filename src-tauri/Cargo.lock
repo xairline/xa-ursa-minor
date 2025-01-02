@@ -4918,13 +4918,6 @@ name = "xa-ursa-minor-hid"
 version = "0.1.0"
 dependencies = [
  "hidapi",
- "rusb",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "time",
 ]
 
 [[package]]
