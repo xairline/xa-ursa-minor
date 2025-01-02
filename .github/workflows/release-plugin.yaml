@@ -50,6 +50,7 @@ jobs:
           cp src-xplane/target/release/libxa_ursa_minor_plugin.dylib ${{ github.workspace }}/build/xa-ursa-minor/mac.xpl || true
           cp src-xplane/target/release/libxa_ursa_minor_plugin.so ${{ github.workspace }}/build/xa-ursa-minor/lin.xpl || true
           cp src-xplane/target/release/xa_ursa_minor_plugin.dll ${{ github.workspace }}/build/xa-ursa-minor/win.xpl || true
+          ls -l ${{ github.workspace }}/build/xa-ursa-minor/
         shell: bash
 
       - name: Upload Artifacts
