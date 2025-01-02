@@ -1,12 +1,10 @@
-use hidapi::HidApi;
 use std::{thread, time};
-mod hid;
-
+use xa_ursa_minor_hid::hid::HIDWrapper;
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn get_sn() -> String {
     // Attempt to create our HID wrapper
-    let Some(hid_wrapper) = hid::HIDWrapper::new() else {
+    let Some(hid_wrapper) = HIDWrapper::new() else {
         return "".to_string();
     };
 
@@ -24,7 +22,7 @@ fn restart_ursa_minor() -> String {
     ];
 
     // Attempt to create our HID wrapper
-    let Some(hid_wrapper) = hid::HIDWrapper::new() else {
+    let Some(hid_wrapper) = HIDWrapper::new() else {
         return "".to_string();
     };
 
@@ -38,7 +36,7 @@ fn restart_ursa_minor() -> String {
 #[tauri::command]
 fn test_ursa_minor() -> String {
     // Attempt to create our HID wrapper
-    let Some(hid_wrapper) = hid::HIDWrapper::new() else {
+    let Some(hid_wrapper) = HIDWrapper::new() else {
         return "".to_string();
     };
 

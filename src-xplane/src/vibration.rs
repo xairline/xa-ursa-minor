@@ -1,6 +1,6 @@
 const BUFFER_MAX_SIZE: usize = 10;
 const DECAY_STEP: u8 = 1;
-
+use xa_ursa_minor_hid::hid::HIDWrapper;
 /// Manages vibration intensity. Only updates to higher intensities
 /// and decays when no new data arrives.
 pub struct VibrationManager {
@@ -8,13 +8,15 @@ pub struct VibrationManager {
     buffer: Vec<u8>,
     /// Current active intensity sent to the motor.
     current_intensity: u8,
+    hid_wrapper: HIDWrapper,
 }
 
 impl VibrationManager {
-    pub fn new() -> Self {
+    pub fn new(hidwrapper: HIDWrapper) -> Self {
         Self {
             buffer: Vec::new(),
             current_intensity: 0,
+            hid_wrapper: hidwrapper,
         }
     }
 
@@ -50,6 +52,9 @@ impl VibrationManager {
     /// Here you'd talk to your actual vibration hardware. For demo, just print.
     fn send_to_motor(&self) {
         plugin_debugln!("Vibration Intensity -> {}", self.current_intensity);
+        self.hid_wrapper
+            .write_vibration(self.current_intensity)
+            .unwrap()
     }
 }
 
@@ -66,7 +71,8 @@ const PROCESS_INTERVAL: std::time::Duration = std::time::Duration::from_millis(5
 /// 3. Feeds the intensity into the VibrationManager.
 pub fn start_vibration_thread(rx: Receiver<(f32, f32, f32)>) {
     thread::spawn(move || {
-        let mut vib_manager = VibrationManager::new();
+        let mut vib_manager =
+            VibrationManager::new(xa_ursa_minor_hid::hid::HIDWrapper::new().unwrap());
 
         loop {
             // Non-blocking receive: if there's data, process it; otherwise proceed.

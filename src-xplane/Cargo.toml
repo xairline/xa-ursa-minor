@@ -7,7 +7,7 @@ edition = "2021"
 [dependencies]
 xplm = { git = "https://github.com/samcrow/rust-xplm", branch = "master" }
 xplm-sys = "0.5.1"
-my-hid = { path = "../src" }
+xa-ursa-minor-hid = { path = "../src-hid" }
 
 [profile.dev]
 opt-level = 2
