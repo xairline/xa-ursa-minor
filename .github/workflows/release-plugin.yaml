@@ -47,14 +47,14 @@ jobs:
 
       - run: |
           mkdir -p ${{ github.workspace }}/build/xa-ursa-minor/
-          cp src-xplane/target/release/libxa_ursa_minor_plugin.dylib ${{ github.workspace }}/build/xa-ursa-minor/mac.xpl || true
-          cp src-xplane/target/release/libxa_ursa_minor_plugin.so ${{ github.workspace }}/build/xa-ursa-minor/lin.xpl || true
-          cp src-xplane/target/release/xa_ursa_minor_plugin.dll ${{ github.workspace }}/build/xa-ursa-minor/win.xpl || true
+          mv src-xplane/target/release/libxa_ursa_minor_plugin.dylib ${{ github.workspace }}/build/xa-ursa-minor/mac.xpl || true
+          mv src-xplane/target/release/libxa_ursa_minor_plugin.so ${{ github.workspace }}/build/xa-ursa-minor/lin.xpl || true
+          mv src-xplane/target/release/xa_ursa_minor_plugin.dll ${{ github.workspace }}\build\xa-ursa-minor\win.xpl || true
           ls -l ${{ github.workspace }}/build/xa-ursa-minor/
         shell: bash
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: x86_64_artifacts
           path: |
