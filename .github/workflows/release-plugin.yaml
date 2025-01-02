@@ -1,0 +1,120 @@
+name: Release
+
+# Controls when the workflow will run
+on:
+  push:
+    branches: [ ci-release ]
+    tags:
+      - 'v*'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest' # for Arm based macs (M1 and above).
+          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
+          - platform: 'windows-latest'
+
+    runs-on: ${{ matrix.platform }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # setup dep if ubuntu
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+        run: |
+          sudo apt-get update
+          sudo apt install -y pkg-config libusb-1.0-0-dev libftdi1-dev
+          sudo apt-get install libudev-dev
+        shell: bash
+
+      - name: build
+        run: |
+          cd src-xplane
+          cargo build  --release
+        shell: bash
+
+      - run: |
+          mkdir -p ${{ github.workspace }}/build/xa-ursa-minor/
+          cp src-xplane/target/release/libxa_ursa_minor_plugin.dylib ${{ github.workspace }}/build/xa-ursa-minor/mac.xpl || true
+          cp src-xplane/target/release/libxa_ursa_minor_plugin.so ${{ github.workspace }}/build/xa-ursa-minor/lin.xpl || true
+          cp src-xplane/target/release/xa_ursa_minor_plugin.dll ${{ github.workspace }}/build/xa-ursa-minor/win.xpl || true
+        shell: bash
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: x86_64_artifacts
+          path: build/xa-ursa-minor/
+
+
+
+  combine-binaries:
+    name: Combine Binaries and Create Release
+    needs:
+      - build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Download x86_64 Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: x86_64_artifacts
+          path: x86_64_build
+      - name: Combine Go Binaries into Universal Binary
+        run: |
+          TAG=${GITHUB_REF##*/}
+          mkdir -p build/xa-ursa-minor
+          cp x86_64_build/*.xpl build/xa-ursa-minor/
+          
+          cd build
+          
+          #          cp ${{ github.workspace }}/skunkcrafts_updater.cfg ${{ github.workspace }}/release/xa-ursa-minor/x86
+          #          sed -i '' "s/REPLACE_ME/${TAG}/g" ${{ github.workspace }}/release/xa-ursa-minor/x86/skunkcrafts_updater.cfg
+          #          sed -i '' "s/@ARCH@/x86/g" ${{ github.workspace }}/release/xa-ursa-minor/x86/skunkcrafts_updater.cfg
+          #          RELEASE_FOLDER=${{ github.workspace }}/release/xa-ursa-minor/x86
+          #          find ${RELEASE_FOLDER}/ -type f ! \( -name '*skunkcrafts_updater*' -o -path '*skunkcrafts_updater*' \) -print0 | while IFS= read -r -d '' file; do
+          #            checksum_hex=$(crc32 "$file")
+          #            # Convert hex checksum to uint32 decimal
+          #            checksum_decimal=$((16#$checksum_hex))
+          #            # Remove "release/" prefix from $file
+          #            modified_file="${file#${RELEASE_FOLDER}/}"
+          #            modified_file="${modified_file#/}"
+          #            echo "$modified_file|$checksum_decimal" >> ${RELEASE_FOLDER}/skunkcrafts_updater_whitelist.txt
+          #          done
+          #          touch ${RELEASE_FOLDER}/skunkcrafts_updater_blacklist.txt
+          #          cp ${{ github.workspace }}/release/xa-ursa-minor/x86/skunkcrafts_updater.cfg XA-ursa-minor/skunkcrafts_updater.cfg
+          #          cp ${{ github.workspace }}/release/xa-ursa-minor/x86/skunkcrafts_updater_whitelist.txt XA-ursa-minor/skunkcrafts_updater_whitelist.txt
+          #          cp ${{ github.workspace }}/release/xa-ursa-minor/x86/skunkcrafts_updater_blacklist.txt XA-ursa-minor/skunkcrafts_updater_blacklist.txt
+          zip -r xa-ursa-minor.zip xa-ursa-minor
+          
+          
+          # push to release branch
+          #          git checkout -b release
+          #          git config --global user.email "release@xairline.org"
+          #          git config --global user.name "GH Release"
+          #          git add -f ${{ github.workspace }}/release/
+          #          git commit -m "Release ${VERSION}"
+          #          git push -f -u origin release
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body_path: ${{ github.workspace }}/README.md
+          files: |
+            ${{ github.workspace }}/build/xa-ursa-minor.zip
+          prerelease: ${{ contains(github.ref_name, '-') }}
