@@ -30,18 +30,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      # setup dep if ubuntu
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+        run: |
+          sudo apt-get update
+          sudo apt install -y pkg-config libusb-1.0-0-dev libftdi1-dev
+          sudo apt-get install libudev-dev
+        shell: bash
+
       - name: build
         run: |
           cd src-xplane
           cargo build  --release
+        shell: bash
 
       - run: |
-          root=$(pwd)
           mkdir -p ${{ github.workspace }}/build/xa-ursa-minor/
           echo "============"
           ls -l src-xplane/target/release/
           echo "============"
           cp src-xplane/target/release/libxa_ursa_minor_plugin.dylib ${{ github.workspace }}/build/xa-ursa-minor/mac.xpl
+        shell: bash
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
