@@ -50,7 +50,9 @@ jobs:
           echo "============"
           ls -l src-xplane/target/release/
           echo "============"
-          cp src-xplane/target/release/libxa_ursa_minor_plugin.dylib ${{ github.workspace }}/build/xa-ursa-minor/mac.xpl
+          cp src-xplane/target/release/libxa_ursa_minor_plugin.dylib ${{ github.workspace }}/build/xa-ursa-minor/mac.xpl || ture
+          cp src-xplane/target/release/libxa_ursa_minor_plugin.so ${{ github.workspace }}/build/xa-ursa-minor/lin.xpl || ture
+          cp src-xplane/target/release/libxa_ursa_minor_plugin.dll ${{ github.workspace }}/build/xa-ursa-minor/win.xpl || ture
         shell: bash
 
       - name: Upload Artifacts
