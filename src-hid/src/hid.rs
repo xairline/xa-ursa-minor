@@ -1,12 +1,11 @@
-
-use hidapi::{HidApi, HidDevice};
+use hidapi::HidApi;
 
 // Replace these with your actual values
 static VID: u16 = 0x4098;
 static PID: u16 = 0xBC27;
 
 pub struct HIDWrapper {
-    device: HidDevice,
+    api: HidApi,
 }
 
 impl HIDWrapper {
@@ -15,20 +14,29 @@ impl HIDWrapper {
         // Create the HID API instance
         let api = HidApi::new().ok()?;
 
-        // Attempt to open the desired device
-        let device = api.open(VID, PID).ok()?;
-
-        Some(HIDWrapper { device })
+        Some(HIDWrapper { api })
     }
 
     /// Retrieve the serial number string, or `None` if something fails
     pub fn get_serial_number(&self) -> Option<String> {
-        self.device.get_serial_number_string().ok().flatten()
+        // Attempt to open the desired device
+        let device = self
+            .api
+            .open(VID, PID)
+            .ok()
+            .ok_or_else(|| "Failed to open HID device".to_string())
+            .ok()?;
+        device.get_serial_number_string().ok().flatten()
     }
 
     /// Write raw data to the device. Returns Ok(()) on success, or Err on failure.
     pub fn write_data(&self, data: &[u8]) -> Result<(), String> {
-        self.device
+        let device = self
+            .api
+            .open(VID, PID)
+            .ok()
+            .ok_or_else(|| "Failed to open HID device".to_string())?;
+        device
             .write(data)
             .map(|_| ())
             .map_err(|e| format!("Failed to write to device: {e}"))
