@@ -34,6 +34,9 @@ pub struct VibrationManager {
 
     /// The new (target) intensity we’re fading into.
     target_intensity: u8,
+
+    /// last intensity
+    last_intensity: u8,
 }
 
 impl VibrationManager {
@@ -45,6 +48,7 @@ impl VibrationManager {
             last_update_instant: Instant::now(),
             old_intensity: 0,
             target_intensity: 0,
+            last_intensity: 0,
         }
     }
 
@@ -128,13 +132,20 @@ impl VibrationManager {
     }
 
     /// Actually send the intensity to the HID device.
-    fn send_to_motor(&self, intensity: u8) {
-        if intensity <= 15 {
+    fn send_to_motor(&mut self, intensity: u8) {
+        if intensity >= 5 {
             plugin_debugln!("Vibration Intensity -> {}", intensity);
+            if let Err(e) = self.hid_wrapper.write_vibration(intensity) {
+                plugin_debugln!("Failed to write vibration to device: {}", e);
+            }
         }
-        if let Err(e) = self.hid_wrapper.write_vibration(intensity) {
-            plugin_debugln!("Failed to write vibration to device: {}", e);
+        if intensity == 0 && self.last_intensity != 0 {
+            plugin_debugln!("Vibration Intensity -> 0");
+            if let Err(e) = self.hid_wrapper.write_vibration(0) {
+                plugin_debugln!("Failed to write vibration to device: {}", e);
+            }
         }
+        self.last_intensity = intensity;
     }
 }
 
