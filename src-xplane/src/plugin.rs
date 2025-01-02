@@ -16,7 +16,7 @@ impl Plugin for UrsaMinorPlugin {
         // The following message should be visible in the developer console and the Log.txt file
         plugin_debugln!("Hello, World! From the Minimal Rust Plugin");
 
-        let (tx, rx) = std::sync::mpsc::channel();
+        let (tx, r_) = std::sync::mpsc::channel();
         let plugin = Self {
             flight_loop: FlightLoop::new(FlightLoopHandler {
                 g_force_y: DataRef::find("sim/flightmodel2/misc/gforce_axil").unwrap(),
