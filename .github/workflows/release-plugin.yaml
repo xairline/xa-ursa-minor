@@ -57,9 +57,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: x86_64_artifacts
-          path:
-            - ${{ github.workspace }}/build/xa-ursa-minor/*.xpl
-            - ${{ github.workspace }}/build\xa-ursa-minor\*.xpl
+          path: |
+            ${{ github.workspace }}/build/xa-ursa-minor/*.xpl
+            ${{ github.workspace }}\build\xa-ursa-minor\*.xpl
 
 
 
