@@ -1,12 +1,13 @@
 # Cargo.toml
 [package]
-name = "xa-ursa-minor"
+name = "xa-ursa-minor-plugin"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 xplm = { git = "https://github.com/samcrow/rust-xplm", branch = "master" }
 xplm-sys = "0.5.1"
+my-hid = { path = "../src" }
 
 [profile.dev]
 opt-level = 2
