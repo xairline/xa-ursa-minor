@@ -4,26 +4,19 @@ use std::time::{Duration, Instant};
 
 use crate::plugin_debugln;
 use xa_ursa_minor_hid::hid::HIDWrapper;
-
 /// How often the worker processes new buffer items (e.g. ~50 Hz).
-const PROCESS_INTERVAL: Duration = Duration::from_millis(20);
-
+pub static mut PROCESS_INTERVAL: Duration = Duration::from_millis(20);
 /// Duration of each new wave in seconds.
-const WAVE_DURATION: f32 = 0.2;
-
+pub static mut WAVE_DURATION: f32 = 0.2;
 /// Map magnitude to [0..255]. Adjust `MAX_MAG` to fit your typical input range.
-const MAX_MAG: f32 = 5.0;
-
+pub static mut MAX_MAG: f32 = 1.5;
 /// Only bother writing intensities above this threshold (like your existing 5).
-const MIN_MOTOR_INTENSITY: u8 = 5;
-
-const HIGH_PASS_ALPHA: f32 = 0.9;
-
-const BASE_FREQ: f32 = 1.0; // Starting frequency
-const FREQ_SENSITIVITY: f32 = 2.0; // Scale factor for delta -> frequency
-const BASE_SHARPNESS: f32 = 1.0; // Starting sharpness
-const SHARPNESS_SENSITIVITY: f32 = 2.0; // Scale factor for delta -> sharpness (raising sine wave)
-
+pub static mut MIN_MOTOR_INTENSITY: u8 = 3;
+pub static mut HIGH_PASS_ALPHA: f32 = 0.9;
+pub static mut BASE_FREQ: f32 = 1.0; // Starting frequency
+pub static mut FREQ_SENSITIVITY: f32 = 2.0; // Scale factor for delta -> frequency
+pub static mut BASE_SHARPNESS: f32 = 1.0; // Starting sharpness
+pub static mut SHARPNESS_SENSITIVITY: f32 = 2.0; // Scale factor for delta -> sharpness (raising sine wave)
 /// Simple 3D high-pass filter using the one-pole method.
 struct HighPassFilter3D {
     alpha: f32,
@@ -75,7 +68,7 @@ struct WaveEvent {
 impl WaveEvent {
     /// Return the intensity of this wave at the given `now` instant.
     /// If the wave has expired, return `None`.
-    fn current_intensity(&self, now: Instant) -> Option<u8> {
+    unsafe fn current_intensity(&self, now: Instant) -> Option<u8> {
         let elapsed = now.duration_since(self.start_time).as_secs_f32();
         if elapsed > WAVE_DURATION {
             // Wave is fully expired
@@ -125,7 +118,7 @@ pub struct VibrationManager {
 
 impl VibrationManager {
     /// Create a new manager with no active waves.
-    pub fn new(hid_wrapper: HIDWrapper) -> Self {
+    pub unsafe fn new(hid_wrapper: HIDWrapper) -> Self {
         Self {
             waves: Vec::new(),
             hid_wrapper,
@@ -136,7 +129,7 @@ impl VibrationManager {
     }
 
     /// Convert (ax, ay, az) -> magnitude -> wave with a certain peak intensity, then store it.
-    pub fn spawn_wave_for_input(&mut self, ax: f32, ay: f32, az: f32) {
+    pub unsafe fn spawn_wave_for_input(&mut self, ax: f32, ay: f32, az: f32) {
         let (fx, fy, fz) = self.hp_filter.filter((ax, ay, az));
 
         // Example magnitude is sqrt(fx^2 + fy^2 + fz^2).
@@ -175,12 +168,12 @@ impl VibrationManager {
     }
 
     /// Called regularly (e.g. every 20ms) to update waves and send motor commands.
-    pub fn update(&mut self) {
+    pub unsafe fn update(&mut self) {
         let now = Instant::now();
 
         // Compute the maximum intensity across all active waves
         let mut max_intensity = 0u8;
-        self.waves.retain(|wave| {
+        self.waves.retain(|wave| unsafe {
             if let Some(current) = wave.current_intensity(now) {
                 if current > max_intensity {
                     max_intensity = current;
@@ -220,7 +213,7 @@ impl VibrationManager {
 ///   2. Spawns a wave on each new input.
 ///   3. Updates/merges waves every `PROCESS_INTERVAL`.
 pub fn start_vibration_thread(rx: Receiver<(f32, f32, f32)>) {
-    thread::spawn(move || {
+    thread::spawn(move || unsafe {
         // Try to open the HID device once. If that fails, bail out.
         let hid_wrapper = match HIDWrapper::new() {
             Some(h) => h,
