@@ -52,6 +52,7 @@ jobs:
           cd src-xplane
           if [ "$MATRIX_PLATFORM" == "macos-latest" ]; then
             cargo build  --release --target aarch64-apple-darwin
+            ls -R -l target/
             mv src-xplane/target/aarch64-apple-darwin/release/libxa_ursa_minor_plugin.dylib mac_arm.xpl
             cargo build  --release --target x86_64-apple-darwin
             mv src-xplane/target/x86_64-apple-darwin/release/libxa_ursa_minor_plugin.dylib mac_intel.xpl
