@@ -50,7 +50,7 @@ jobs:
           MATRIX_PLATFORM: ${{ matrix.platform }}
         run: |
           cd src-xplane
-          if [ "$MATRIX_PLATFORM" == "macos" ]; then
+          if [ "$MATRIX_PLATFORM" == "macos-latest" ]; then
             cargo build  --release --target aarch64-apple-darwin
             mv src-xplane/target/release/libxa_ursa_minor_plugin.dylib mac_arm.xpl
             cargo build  --release --target x86_64-apple-darwin
