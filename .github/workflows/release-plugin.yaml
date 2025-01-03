@@ -3,7 +3,7 @@ name: Release
 # Controls when the workflow will run
 on:
   push:
-    branches: [ ci-release ]
+    branches: [ better-vibration ]
     tags:
       - 'v*'
   # Allows you to run this workflow manually from the Actions tab
@@ -30,6 +30,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
       # setup dep if ubuntu
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -40,13 +46,24 @@ jobs:
         shell: bash
 
       - name: build
+        env:
+          MATRIX_PLATFORM: ${{ matrix.platform }}
         run: |
           cd src-xplane
-          cargo build  --release
+          if [ "$MATRIX_PLATFORM" == "macos-latest" ]; then
+            cargo build  --release --target aarch64-apple-darwin
+            mv target/aarch64-apple-darwin/release/libxa_ursa_minor_plugin.dylib mac_arm.xpl
+            cargo build  --release --target x86_64-apple-darwin
+            mv target/x86_64-apple-darwin/release/libxa_ursa_minor_plugin.dylib mac_intel.xpl
+            lipo -create -output mac.xpl mac_arm.xpl mac_intel.xpl
+            rm mac_arm.xpl mac_intel.xpl
+            mv mac.xpl ../mac.xpl
+          else
+            cargo build  --release
+          fi
         shell: bash
 
       - run: |
-          mv src-xplane/target/release/libxa_ursa_minor_plugin.dylib mac.xpl || true
           mv src-xplane/target/release/libxa_ursa_minor_plugin.so lin.xpl || true
           mv src-xplane/target/release/xa_ursa_minor_plugin.dll win.xpl || true
           ls -l *.xpl
