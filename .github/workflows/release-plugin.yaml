@@ -57,6 +57,7 @@ jobs:
             mv target/x86_64-apple-darwin/release/libxa_ursa_minor_plugin.dylib mac_intel.xpl
             lipo -create -output mac.xpl mac_arm.xpl mac_intel.xpl
             rm mac_arm.xpl mac_intel.xpl
+            mv mac.xpl ../mac.xpl
           else
             cargo build  --release
           fi
