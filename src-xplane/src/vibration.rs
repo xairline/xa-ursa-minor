@@ -11,12 +11,6 @@ const PROCESS_INTERVAL: Duration = Duration::from_millis(20);
 /// Duration of each new wave in seconds.
 const WAVE_DURATION: f32 = 0.2;
 
-/// If you want to control how many sine cycles occur within `WAVE_DURATION`.
-const WAVE_FREQUENCY: f32 = 1.0; // 1 cycle from 0..WAVE_DURATION
-
-/// “Sharpness” or shaping exponent. Adjust to taste; >1 means “punchier” wave.
-const SHARPNESS: f32 = 1.0;
-
 /// Map magnitude to [0..255]. Adjust `MAX_MAG` to fit your typical input range.
 const MAX_MAG: f32 = 5.0;
 
@@ -24,6 +18,11 @@ const MAX_MAG: f32 = 5.0;
 const MIN_MOTOR_INTENSITY: u8 = 5;
 
 const HIGH_PASS_ALPHA: f32 = 0.9;
+
+const BASE_FREQ: f32 = 1.0; // Starting frequency
+const FREQ_SENSITIVITY: f32 = 2.0; // Scale factor for delta -> frequency
+const BASE_SHARPNESS: f32 = 1.0; // Starting sharpness
+const SHARPNESS_SENSITIVITY: f32 = 2.0; // Scale factor for delta -> sharpness (raising sine wave)
 
 /// Simple 3D high-pass filter using the one-pole method.
 struct HighPassFilter3D {
@@ -69,6 +68,8 @@ impl HighPassFilter3D {
 struct WaveEvent {
     start_time: Instant,
     target_intensity: u8,
+    wave_frequency: f32, // per-wave frequency
+    wave_sharpness: f32, // per-wave shaping exponent
 }
 
 impl WaveEvent {
@@ -76,7 +77,6 @@ impl WaveEvent {
     /// If the wave has expired, return `None`.
     fn current_intensity(&self, now: Instant) -> Option<u8> {
         let elapsed = now.duration_since(self.start_time).as_secs_f32();
-
         if elapsed > WAVE_DURATION {
             // Wave is fully expired
             return None;
@@ -85,18 +85,19 @@ impl WaveEvent {
         // 0..1 progress through the wave
         let progress = elapsed / WAVE_DURATION;
 
-        // Example sine wave approach:
-        //   raw_sine goes from 0..(2π * WAVE_FREQUENCY)
-        //   We clamp it to [0..1] after the shaping
-        let raw_sine = (progress * std::f32::consts::TAU * WAVE_FREQUENCY).sin();
+        // Example: full sine wave from 0..(2π * wave_frequency)
+        let raw_sine = (progress * std::f32::consts::TAU * self.wave_frequency).sin();
 
-        // You might prefer a half-sine from 0..π so it starts at 0, up to 1, back to 0.
-        // For that, do something like:
-        //    let raw_sine = (progress * std::f32::consts::PI).sin();
-        // Then it goes from 0..1..0. Use whichever shape you like.
+        // We only want positive arcs. If you prefer a half-sine from 0..π, do:
+        //   let raw_sine = (progress * std::f32::consts::PI).sin();
+        // (It starts at 0, up to 1, back to 0, without going negative.)
 
-        // “Raise to SHARPNESS” for more abrupt ramp up/down:
-        let shaped = if raw_sine < 0.0 { 0.0 } else { raw_sine }.powf(SHARPNESS);
+        let shaped = if raw_sine < 0.0 {
+            0.0
+        } else {
+            // Raise sine to wave_sharpness for steeper rise/fall
+            raw_sine.powf(self.wave_sharpness)
+        };
 
         let intensity_f = shaped * (self.target_intensity as f32);
         let intensity = intensity_f.round().clamp(0.0, 255.0) as u8;
@@ -118,6 +119,8 @@ pub struct VibrationManager {
     last_intensity: u8,
 
     hp_filter: HighPassFilter3D,
+
+    previous_mag: f32,
 }
 
 impl VibrationManager {
@@ -128,6 +131,7 @@ impl VibrationManager {
             hid_wrapper,
             last_intensity: 0,
             hp_filter: HighPassFilter3D::new(HIGH_PASS_ALPHA),
+            previous_mag: 0.0,
         }
     }
 
@@ -135,7 +139,7 @@ impl VibrationManager {
     pub fn spawn_wave_for_input(&mut self, ax: f32, ay: f32, az: f32) {
         let (fx, fy, fz) = self.hp_filter.filter((ax, ay, az));
 
-        // For example, magnitude is sqrt(ax^2 + ay^2 + az^2).
+        // Example magnitude is sqrt(fx^2 + fy^2 + fz^2).
         let mag = (fx.powi(2) + fy.powi(2) + fz.powi(2)).sqrt();
 
         // Convert magnitude to [0..255]
@@ -147,10 +151,23 @@ impl VibrationManager {
             return;
         }
 
+        // ------------------- NEW: compute delta and map it to frequency/sharpness -------------------
+        let delta_mag = (mag - self.previous_mag).abs();
+        self.previous_mag = mag; // update for next call
+
+        // Dynamic frequency: e.g., base + some sensitivity * delta
+        let wave_frequency = BASE_FREQ + FREQ_SENSITIVITY * delta_mag;
+
+        // Dynamic sharpness: e.g., base + some sensitivity * delta
+        // clamp or limit if you like (to avoid going too high)
+        let wave_sharpness = (BASE_SHARPNESS + SHARPNESS_SENSITIVITY * delta_mag).clamp(1.0, 5.0);
+
         // Create a new wave event
         let wave = WaveEvent {
             start_time: Instant::now(),
             target_intensity,
+            wave_frequency,
+            wave_sharpness,
         };
 
         // Insert wave into the list
