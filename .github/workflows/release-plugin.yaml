@@ -3,7 +3,7 @@ name: Release
 # Controls when the workflow will run
 on:
   push:
-    branches: [ ci-release ]
+    branches: [ better-vibration ]
     tags:
       - 'v*'
   # Allows you to run this workflow manually from the Actions tab
