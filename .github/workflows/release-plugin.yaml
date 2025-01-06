@@ -49,7 +49,6 @@ jobs:
         env:
           MATRIX_PLATFORM: ${{ matrix.platform }}
         run: |
-          cd src-xplane
           if [ "$MATRIX_PLATFORM" == "macos-latest" ]; then
             cargo build  --release --target aarch64-apple-darwin
             mv target/aarch64-apple-darwin/release/libxa_ursa_minor_plugin.dylib mac_arm.xpl
@@ -57,15 +56,14 @@ jobs:
             mv target/x86_64-apple-darwin/release/libxa_ursa_minor_plugin.dylib mac_intel.xpl
             lipo -create -output mac.xpl mac_arm.xpl mac_intel.xpl
             rm mac_arm.xpl mac_intel.xpl
-            mv mac.xpl ../mac.xpl
           else
             cargo build  --release
           fi
         shell: bash
 
       - run: |
-          mv src-xplane/target/release/libxa_ursa_minor_plugin.so lin.xpl || true
-          mv src-xplane/target/release/xa_ursa_minor_plugin.dll win.xpl || true
+          mv target/release/libxa_ursa_minor_plugin.so lin.xpl || true
+          mv target/release/xa_ursa_minor_plugin.dll win.xpl || true
           ls -l *.xpl
         shell: bash
 
