@@ -8,5 +8,6 @@ mod logger;
 mod misc;
 mod plugin;
 mod vibration;
+mod hid;
 
 xplane_plugin!(plugin::UrsaMinorPlugin);

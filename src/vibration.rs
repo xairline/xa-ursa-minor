@@ -3,7 +3,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use crate::plugin_debugln;
-use xa_ursa_minor_hid::hid::HIDWrapper;
+use crate::hid::HIDWrapper;
 /// How often the worker processes new buffer items (e.g. ~50 Hz).
 pub static mut PROCESS_INTERVAL: Duration = Duration::from_millis(20);
 /// Duration of each new wave in seconds.

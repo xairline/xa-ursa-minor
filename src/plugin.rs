@@ -1,7 +1,7 @@
 use crate::flight_loop::FlightLoopHandler;
+use crate::hid::HIDWrapper;
 use crate::plugin_debugln;
 use crate::vibration::start_vibration_thread;
-use xa_ursa_minor_hid::hid::HIDWrapper;
 use xplm::data::borrowed::DataRef;
 use xplm::flight_loop::FlightLoop;
 use xplm::plugin::{Plugin, PluginInfo};

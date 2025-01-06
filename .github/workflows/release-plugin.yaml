@@ -3,7 +3,7 @@ name: Release
 # Controls when the workflow will run
 on:
   push:
-    branches: [ better-vibration ]
+    branches: [ imgui ]
     tags:
       - 'v*'
   # Allows you to run this workflow manually from the Actions tab
