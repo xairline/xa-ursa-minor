@@ -72,6 +72,34 @@ fn test_ursa_minor() -> String {
     "Success".to_string()
 }
 
+#[tauri::command]
+fn lights_off() -> String {
+    // Attempt to create our HID wrapper
+    let Some(hid_wrapper) = HIDWrapper::new() else {
+        return "".to_string();
+    };
+
+    // Write the data
+    match hid_wrapper.write_backlight(0) {
+        Ok(_) => "Success".to_string(),
+        Err(_) => "Failed".to_string(),
+    }
+}
+
+#[tauri::command]
+fn lights_on() -> String {
+    // Attempt to create our HID wrapper
+    let Some(hid_wrapper) = HIDWrapper::new() else {
+        return "".to_string();
+    };
+
+    // Write the data
+    match hid_wrapper.write_backlight(255) {
+        Ok(_) => "Success".to_string(),
+        Err(_) => "Failed".to_string(),
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -79,7 +107,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_sn,
             restart_ursa_minor,
-            test_ursa_minor
+            test_ursa_minor,
+            lights_off,
+            lights_on,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -47,6 +47,12 @@ impl HIDWrapper {
         data[8] = vibration;
         self.write_data(&data)
     }
+
+    pub fn write_backlight(&self, brightness: u8) -> Result<(), String> {
+        let mut data = [0x02, 0x20, 0xbb, 0, 0, 3, 0x49, 0, 0, 0, 0, 0, 0, 0];
+        data[8] = brightness;
+        self.write_data(&data)
+    }
 }
 
 #[cfg(test)]

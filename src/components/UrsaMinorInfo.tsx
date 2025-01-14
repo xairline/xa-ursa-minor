@@ -22,6 +22,16 @@ const UrsaMinorInfo = () => {
     console.log(res);
   }
 
+  async function lightsOff() {
+    let res = await invoke("lights_off", {})
+    console.log(res);
+  }
+
+  async function lightsOn() {
+    let res = await invoke("lights_on", {})
+    console.log(res);
+  }
+
   useEffect(() => {
     const interval = setInterval(() => {
       getSerialNumber();
@@ -46,7 +56,11 @@ const UrsaMinorInfo = () => {
             </p>
             <small className="text-muted">Serial Number: {serialNumber}</small>
           </Card.Text>
-          <div className="d-flex justify-content-evenly" style={{width: "100%"}}>
+          <div className="d-flex justify-content-evenly" style={{width: "100%", paddingTop: "20px"}}>
+            <Button variant="primary" onClick={lightsOn}>Lights On</Button>
+            <Button variant="dark" onClick={lightsOff}>Lights Off</Button>
+          </div>
+          <div className="d-flex justify-content-evenly" style={{width: "100%", paddingTop: "20px"}}>
             <Button variant="primary" onClick={testUrsaMinor}>Test</Button>
             <Button variant="danger" onClick={restartUrsaMinor}>Restart</Button>
           </div>
