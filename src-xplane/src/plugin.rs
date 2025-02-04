@@ -55,7 +55,7 @@ impl Plugin for UrsaMinorPlugin {
         // Clone the Arc pointer (cheap operation) for sharing with the spawned thread.
         let hidwrapper_shared = Arc::clone(&self.hidwrapper);
         thread::spawn(move || {
-            for i in 0..255 {
+            for i in 0..=255 {
                 {
                     // Lock the mutex to safely use the HIDWrapper.
                     let mut hw = hidwrapper_shared.lock().unwrap();
@@ -73,7 +73,7 @@ impl Plugin for UrsaMinorPlugin {
         HIDWrapper::new().unwrap().write_vibration(0).unwrap();
         // Clone the Arc pointer (cheap operation) for sharing with the spawned thread.
         let hidwrapper_shared = Arc::clone(&self.hidwrapper);
-        for i in 0..255 {
+        for i in 0..=255 {
             {
                 // Lock the mutex to safely use the HIDWrapper.
                 let mut hw = hidwrapper_shared.lock().unwrap();
