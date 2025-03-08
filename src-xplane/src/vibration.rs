@@ -189,7 +189,7 @@ impl VibrationManager {
         //  - it’s zero but the last intensity was non-zero
         if max_intensity >= MIN_MOTOR_INTENSITY {
             if max_intensity != self.last_intensity {
-                plugin_debugln!("Vibration Intensity -> {}", max_intensity);
+                // plugin_debugln!("Vibration Intensity -> {}", max_intensity);
                 if let Err(e) = self.hid_wrapper.write_vibration(max_intensity) {
                     plugin_debugln!("Failed to write vibration to device: {}", e);
                 }
